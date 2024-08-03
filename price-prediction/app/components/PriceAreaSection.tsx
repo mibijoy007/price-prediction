@@ -1,23 +1,25 @@
 'use client'
 
 import axios from 'axios'
-import React, { ChangeEvent, FormEvent, useState } from 'react'
+import React, { ChangeEvent, FC, FormEvent, useState } from 'react'
 import DemoCSV from './DemoCSV'
 import ViewUploadedCSV from './ViewUploadedCSV'
 
 
-export interface Csvtype{
-    'area' : string;
+export interface Csvtype {
+    'area': string;
     'price': string;
 }
 
 export interface CsvDisplayProps {
     csvData: Csvtype[];
+}
+
+export interface ChildComponentProps {
+    sendDataToParent?: (data: any) => void;
   }
 
-
-
-const PriceAreaSection = () => {
+const PriceAreaSection = ({sendDataToParent }:ChildComponentProps) => {
     const [file, setFile] = useState<File | null>(null)
     const [area, setArea] = useState<string>('')
     // const [predictedPrice, setPredictedPrice] = useState<string>('')
@@ -26,7 +28,10 @@ const PriceAreaSection = () => {
 
     const [fileMessage, setFileMessage] = useState<string>('')
 
-    
+    //demo price
+    const [demoPredictedPrice, setDemoPredictedPrice] = useState<number>()
+
+
 
     const handleFile = (event: ChangeEvent<HTMLInputElement>) => {
         if (event.target.files) {
@@ -72,13 +77,13 @@ const PriceAreaSection = () => {
             formData.append('area', area)
 
             // console.log('here');
-            
+
             // console.log(formData); //this is null!
             // console.log(formData.getAll('file')); //shows the file metadata
             // console.log(process.env.NEXT_PUBLIC_API_URL);
 
             try {
-                const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}`, formData, {
+                const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/upload`, formData, {
                     headers: {
                         'Content-Type': 'multipart/form-data'
                     },
@@ -87,7 +92,16 @@ const PriceAreaSection = () => {
                 setCsvData(response.data)
                 // console.log(response.data);
                 // console.log(csvData);
-                
+
+
+                // send to parent
+                // to solve ///Cannot invoke an object which is possibly 'undefined'.
+                if(sendDataToParent){
+                    sendDataToParent(csvData)
+                }
+
+                //demo price
+                setDemoPredictedPrice(99999)
 
             } catch (error: any) {
                 setCsvData([])
@@ -97,49 +111,51 @@ const PriceAreaSection = () => {
     }
 
     return (
-        <div className="m-10 grid grid-cols-2">
-        <div className="">
+        
+            <div className="">
 
-            <form onSubmit={handleSubmit}>
-                <div className="m-10 text-xl">
-                    <div className='text-2xl font-semibold'>
-                        Please upload your "csv" file:
+                <form onSubmit={handleSubmit}>
+                    <div className="m-10 text-xl">
+                        <div className='text-2xl font-semibold'>
+                            Please upload your "csv" file:
+                        </div>
+                        <input type="file" className="mt-4" accept='.csv' name='file' required onChange={handleFile} />
+                        {fileMessage ?
+                            <p className='text-sm  mt-2 text-blue-500'>{fileMessage}</p>
+                            : null}
                     </div>
-                    <input type="file" className="mt-4" accept='.csv' name='file' required onChange={handleFile} />
-                    {fileMessage ?
-                        <p className='text-sm  mt-2 text-blue-500'>{fileMessage}</p>
-                        : null}
-                </div>
 
-                {/* Insert area */}
+                    {/* Insert area */}
+                    <div className="m-10 text-xl">
+                        <p>
+                            To know the price, Enter your desired <span className="font-bold">area </span> :
+                        </p>
+                        <input type="number" value={area} name='area' required className="mt-4 p-1" onChange={handleArea} placeholder='Here...' />
+                    </div>
+                    <button type="submit" className='rounded-xl bg-blue-500 p-2 text-white ml-10'>Predict Price</button>
+                </form>
+
+                {/* Desired price */}
+
                 <div className="m-10 text-xl">
-                    <p>
-                        To know the price, Enter your desired <span className="font-bold">area </span> :
-                    </p>
-                    <input type="number" value={area} name='area' required className="mt-4 p-1" onChange={handleArea} placeholder='Here...' />
-                </div>
-                <button type="submit" className='rounded-xl bg-blue-500 p-2 text-white ml-10'>Predict Price</button>
-            </form>
+                    <p className="font-bold font">
+                        According to the 'csv' file Price is :
 
-            {/* Desired price */}
-
-            <div className="m-10 text-xl">
-                <p className="font-bold font">
-                    According to the 'csv' file Price is :
-
-                    {/* output here */}
-                    {/* {predictedPrice && <span className="border-2 border-red-500 p-2 rounded-lg ml-2">{predictedPrice}</span>
-
+                        {/* output here */}
+                        {/* {
+                        predictedPrice && <span className="border-2 border-red-500 p-2 rounded-lg ml-2">{predictedPrice}</span>
                     } */}
+                        
+                        {
+                        demoPredictedPrice && <span className="border-2 border-red-500 p-2 rounded-lg ml-2">{demoPredictedPrice}</span>
+                    }
+                    </p>
 
-                </p>
+                </div>
 
             </div>
 
-        </div>
-
-        {csvData ? <ViewUploadedCSV csvData={csvData} /> : <DemoCSV/>}
-        </div>
+           
     )
 }
 

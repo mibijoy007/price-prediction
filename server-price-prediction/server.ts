@@ -17,6 +17,16 @@ app.get('/', (req, res) => {
     res.send('Welcome to my server!')
   })
 
+app.post('/predict-price',(req: Request, res: Response, next: NextFunction) => {
+  const area = req.body.area
+  console.log("backend console: ",req.body.area);
+
+  const price = area * 3
+
+  res.json({ PredictedPrice : price} )
+  
+})
+
 app.post('/upload', upload.single('file'), (req: Request, res: Response, next: NextFunction) => {
   if (!req.file) {
     return res.status(400).send('File is required');
